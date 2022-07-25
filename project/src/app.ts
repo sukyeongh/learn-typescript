@@ -1,5 +1,7 @@
-import axios from 'axios';
-import { Chart } from 'chart.js';
+import axios, { AxiosResponse } from 'axios';
+import * as Chart from 'chart.js';
+// 타입 모듈
+import { CountrySummaryResponse, CovidSummaryResponse } from './covid';
 
 // utils
 function $(selector: string) {
@@ -38,7 +40,7 @@ let isDeathLoading = false;
 const isRecoveredLoading = false;
 
 // api
-function fetchCovidSummary() {
+function fetchCovidSummary(): Promise<AxiosResponse<CovidSummaryResponse>> {
   const url = 'https://api.covid19api.com/summary';
   return axios.get(url);
 }
@@ -49,7 +51,10 @@ enum CovidStatus {
   Deaths = 'deaths',
 }
 
-function fetchCountryInfo(countryCode: string, status: CovidStatus) {
+function fetchCountryInfo(
+  countryCode: string,
+  status: CovidStatus
+): Promise<AxiosResponse<CountrySummaryResponse>> {
   // status params: confirmed, recovered, deaths
   const url = `https://api.covid19api.com/country/${countryCode}/status/${status}`;
   return axios.get(url);
@@ -161,9 +166,10 @@ async function setupData() {
 }
 
 function renderChart(data: any, labels: any) {
-  const ctx = $('#lineChart').getContext('2d');
-  Chart.defaults.color = '#f5eaea';
-  Chart.defaults.font.family = 'Exo 2';
+  const lineChartElement = $('#lineChart') as HTMLCanvasElement;
+  const ctx = lineChartElement.getContext('2d');
+  // Chart.defaults.global.defaultFontColor = '#f5eaea';
+  // Chart.defaults.global.defaultFontFamily = 'Exo 2';
   new Chart(ctx, {
     type: 'line',
     data: {
@@ -189,7 +195,7 @@ function setChartData(data: any) {
   renderChart(chartData, chartLabel);
 }
 
-function setTotalConfirmedNumber(data: any) {
+function setTotalConfirmedNumber(data: CovidSummaryResponse) {
   confirmedTotal.innerText = data.Countries.reduce(
     (total: any, current: any) => (total += current.TotalConfirmed),
     0
